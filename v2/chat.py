@@ -41,8 +41,8 @@ torch.backends.cuda.matmul.allow_tf32 = True
 #
 ########################################################################################################
 
-# args.strategy = 'cpu fp32'
-args.strategy = 'cuda fp16'
+args.strategy = 'cpu fp32'
+# args.strategy = 'cuda fp16'
 # args.strategy = 'cuda:0 fp16 -> cuda:1 fp16'
 # args.strategy = 'cuda fp16i8 *10 -> cuda fp16'
 # args.strategy = 'cuda fp16i8'
@@ -58,7 +58,8 @@ CHAT_LANG = 'English' # English // Chinese // more to come
 # Use '/' in model path, instead of '\'
 # Use convert_model.py to convert a model for a strategy, for faster loading & saves CPU RAM 
 if CHAT_LANG == 'English':
-    args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-14B-v9-Eng99%-Other1%-20230412-ctx8192'
+    args.MODEL_NAME = './models/FarmBot_169M'
+    # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-14B-v9-Eng99%-Other1%-20230412-ctx8192'
     # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-7B-v9-Eng99%-Other1%-20230412-ctx8192'
     # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-pile-14b/RWKV-4-Pile-14B-20230313-ctx8192-test1050'
 
@@ -180,7 +181,7 @@ for s in srv_list:
     save_all_stat(s, 'chat', out)
 
 def reply_msg(msg):
-    print(f'{bot}{interface} {msg}\n')
+    return f'{bot}{interface} {msg}\n'
 
 def on_message(message):
     global model_tokens, model_state, user, bot, interface, init_prompt
@@ -210,8 +211,7 @@ def on_message(message):
     if msg == '+reset':
         out = load_all_stat('', 'chat_init')
         save_all_stat(srv, 'chat', out)
-        reply_msg("Chat reset.")
-        return
+        return reply_msg("Chat reset.")
     
     # use '+prompt {path}' to load a new prompt
     elif msg[:8].lower() == '+prompt ':
@@ -286,6 +286,7 @@ Below is an instruction that describes a task. Write a response that appropriate
         begin = len(model_tokens)
         out_last = begin
         occurrence = {}
+        response = ''
         for i in range(FREE_GEN_LEN+100):
             for n in occurrence:
                 out[n] -= (GEN_alpha_presence + occurrence[n] * GEN_alpha_frequency)
@@ -308,15 +309,17 @@ Below is an instruction that describes a task. Write a response that appropriate
             
             xxx = pipeline.decode(model_tokens[out_last:])
             if '\ufffd' not in xxx: # avoid utf-8 display issues
-                print(xxx, end='', flush=True)
+                # print(xxx, end='', flush=True)
+                response += xxx
                 out_last = begin + i + 1
                 if i >= FREE_GEN_LEN:
                     break
-        print('\n')
+        # print('\n')
         # send_msg = pipeline.decode(model_tokens[begin:]).strip()
         # print(f'### send ###\n[{send_msg}]')
         # reply_msg(send_msg)
         save_all_stat(srv, 'gen_1', out)
+        return response
 
     else:
         if msg.lower() == '+':
@@ -333,7 +336,8 @@ Below is an instruction that describes a task. Write a response that appropriate
 
         begin = len(model_tokens)
         out_last = begin
-        print(f'{bot}{interface}', end='', flush=True)
+        # print(f'{bot}{interface}', end='', flush=True)
+        response = ''
         occurrence = {}
         for i in range(999):
             if i <= 0:
@@ -364,7 +368,8 @@ Below is an instruction that describes a task. Write a response that appropriate
 
             xxx = pipeline.decode(model_tokens[out_last:])
             if '\ufffd' not in xxx: # avoid utf-8 display issues
-                print(xxx, end='', flush=True)
+                # print(xxx, end='', flush=True)
+                response += xxx
                 out_last = begin + i + 1
             
             send_msg = pipeline.decode(model_tokens[begin:])
@@ -386,6 +391,7 @@ Below is an instruction that describes a task. Write a response that appropriate
         # print(f'### send ###\n[{send_msg}]')
         # reply_msg(send_msg)
         save_all_stat(srv, 'chat', out)
+        return response
 
 ########################################################################################################
 
@@ -442,9 +448,9 @@ print(f'{pipeline.decode(model_tokens)}'.replace(f'\n\n{bot}',f'\n{bot}'), end='
 
 ########################################################################################################
 
-while True:
-    msg = prompt(f'{user}{interface} ')
-    if len(msg.strip()) > 0:
-        on_message(msg)
-    else:
-        print('Error: please say something')
+# while True:
+#     msg = prompt(f'{user}{interface} ')
+#     if len(msg.strip()) > 0:
+#         on_message(msg)
+#     else:
+#         print('Error: please say something')
