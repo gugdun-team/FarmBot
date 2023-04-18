@@ -183,7 +183,7 @@ for s in srv_list:
 def reply_msg(msg):
     return f'{bot}{interface} {msg}\n'
 
-def on_message(message):
+def on_message(message, response, out):
     global model_tokens, model_state, user, bot, interface, init_prompt
 
     srv = 'dummy_server'
@@ -286,7 +286,6 @@ Below is an instruction that describes a task. Write a response that appropriate
         begin = len(model_tokens)
         out_last = begin
         occurrence = {}
-        response = ''
         for i in range(FREE_GEN_LEN+100):
             for n in occurrence:
                 out[n] -= (GEN_alpha_presence + occurrence[n] * GEN_alpha_frequency)
@@ -310,7 +309,7 @@ Below is an instruction that describes a task. Write a response that appropriate
             xxx = pipeline.decode(model_tokens[out_last:])
             if '\ufffd' not in xxx: # avoid utf-8 display issues
                 # print(xxx, end='', flush=True)
-                response += xxx
+                response.append(xxx)
                 out_last = begin + i + 1
                 if i >= FREE_GEN_LEN:
                     break
@@ -319,7 +318,6 @@ Below is an instruction that describes a task. Write a response that appropriate
         # print(f'### send ###\n[{send_msg}]')
         # reply_msg(send_msg)
         save_all_stat(srv, 'gen_1', out)
-        return response
 
     else:
         if msg.lower() == '+':
@@ -337,7 +335,6 @@ Below is an instruction that describes a task. Write a response that appropriate
         begin = len(model_tokens)
         out_last = begin
         # print(f'{bot}{interface}', end='', flush=True)
-        response = ''
         occurrence = {}
         for i in range(999):
             if i <= 0:
@@ -369,7 +366,7 @@ Below is an instruction that describes a task. Write a response that appropriate
             xxx = pipeline.decode(model_tokens[out_last:])
             if '\ufffd' not in xxx: # avoid utf-8 display issues
                 # print(xxx, end='', flush=True)
-                response += xxx
+                response.append(xxx)
                 out_last = begin + i + 1
             
             send_msg = pipeline.decode(model_tokens[begin:])
@@ -391,7 +388,6 @@ Below is an instruction that describes a task. Write a response that appropriate
         # print(f'### send ###\n[{send_msg}]')
         # reply_msg(send_msg)
         save_all_stat(srv, 'chat', out)
-        return response
 
 ########################################################################################################
 
