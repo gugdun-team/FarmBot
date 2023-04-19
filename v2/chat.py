@@ -52,14 +52,16 @@ args.strategy = 'cpu fp32'
 os.environ["RWKV_JIT_ON"] = '1' # '1' or '0', please use torch 1.13+ and benchmark speed
 os.environ["RWKV_CUDA_ON"] = '0' # '1' to compile CUDA kernel (10x faster), requires c++ compiler & cuda libraries
 
-CHAT_LANG = 'English' # English // Chinese // more to come
+CHAT_LANG = 'Russian' # English // Chinese // more to come
 
 # Download RWKV models from https://huggingface.co/BlinkDL
 # Use '/' in model path, instead of '\'
 # Use convert_model.py to convert a model for a strategy, for faster loading & saves CPU RAM 
-if CHAT_LANG == 'English':
+if CHAT_LANG == 'Russian':
     args.MODEL_NAME = './models/FarmBot_169M'
-    # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-14B-v9-Eng99%-Other1%-20230412-ctx8192'
+
+elif CHAT_LANG == 'English':
+    args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-14B-v9-Eng99%-Other1%-20230412-ctx8192'
     # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-raven/RWKV-4-Raven-7B-v9-Eng99%-Other1%-20230412-ctx8192'
     # args.MODEL_NAME = '/fsx/BlinkDL/HF-MODEL/rwkv-4-pile-14b/RWKV-4-Pile-14B-20230313-ctx8192-test1050'
 
@@ -73,7 +75,7 @@ elif CHAT_LANG == 'Japanese':
 
 # -1.py for [User & Bot] (Q&A) prompt
 # -2.py for [Bob & Alice] (chat) prompt
-PROMPT_FILE = f'{current_path}/prompt/default/{CHAT_LANG}-2.py'
+PROMPT_FILE = f'{current_path}/prompt/{CHAT_LANG}-1.py'
 
 CHAT_LEN_SHORT = 40
 CHAT_LEN_LONG = 150
@@ -81,10 +83,10 @@ FREE_GEN_LEN = 256
 
 # For better chat & QA quality: reduce temp, reduce top-p, increase repetition penalties
 # Explanation: https://platform.openai.com/docs/api-reference/parameter-details
-GEN_TEMP = 1.1 # It could be a good idea to increase temp when top_p is low
-GEN_TOP_P = 0.7 # Reduce top_p (to 0.5, 0.2, 0.1 etc.) for better Q&A accuracy (and less diversity)
+GEN_TEMP = 1.6 # It could be a good idea to increase temp when top_p is low
+GEN_TOP_P = 0.1 # Reduce top_p (to 0.5, 0.2, 0.1 etc.) for better Q&A accuracy (and less diversity)
 GEN_alpha_presence = 0.2 # Presence Penalty
-GEN_alpha_frequency = 0.2 # Frequency Penalty
+GEN_alpha_frequency = 0.4 # Frequency Penalty
 AVOID_REPEAT = '，：？！'
 
 CHUNK_LEN = 256 # split input into chunks to save VRAM (shorter -> slower)
@@ -437,7 +439,7 @@ elif CHAT_LANG == 'Japanese':
 ボットとの会話を楽しんでください。また、定期的に+resetして、ボットのメモリをリセットすることを忘れないようにしてください。
 '''
 
-print(HELP_MSG)
+# print(HELP_MSG)
 print(f'{CHAT_LANG} - {args.MODEL_NAME} - {args.strategy}')
 
 print(f'{pipeline.decode(model_tokens)}'.replace(f'\n\n{bot}',f'\n{bot}'), end='')

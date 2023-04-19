@@ -15,7 +15,8 @@ class User():
     def __init__(self):
         self.__id = uuid4().hex
         self.__timeout = 0
-        self.out = v2.chat.load_all_stat('', 'chat_init')
+        self.out = None
+        # self.out = v2.chat.load_all_stat('', 'chat_init')
     
     def getId(self):
         return self.__id
@@ -39,6 +40,11 @@ class Prompt(threading.Thread):
         self.__response = ['']
 
     def run(self):
+        if (self.__user.out == None):
+            self.__user.out = v2.chat.run_rnn(v2.chat.pipeline.encode(v2.chat.init_prompt))
+            v2.chat.save_all_stat('', 'chat_init', self.__user.out)
+            v2.chat.gc.collect()
+            v2.chat.torch.cuda.empty_cache()
         v2.chat.on_message(self.__message, self.__response, self.__user.out)
         self.__status = True
 
@@ -101,11 +107,11 @@ api.add_resource(ResponseResource, '/response')
 
 if __name__ == '__main__':
     app.run(debug=False)
-    def gc():
+    def userGC():
         for user in userList:
             user.tick()
             if user.getTimeout() > TIMEOUT_MAX:
                 print(f"User {user.getId()} expired")
                 userList.remove(user)
-        threading.Timer(1, gc).start()
-    gc()
+        threading.Timer(1, userGC).start()
+    userGC()
